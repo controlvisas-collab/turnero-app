@@ -53,17 +53,26 @@ export default function Page() {
 };
 
   const callNext = async () => {
-    if (!waiting.length) return;
+  if (!waiting.length) return;
 
-    const next = waiting[0];
+  const next = waiting[0];
 
-    // pasar actual a done
-    if (serving.length) {
-      await supabase
-        .from("queue")
-        .update({ status: "done" })
-        .eq("id", serving[0].id);
-    }
+  // pasar actual a done
+  if (serving.length) {
+    await supabase
+      .from("queue")
+      .update({ status: "done" })
+      .eq("id", serving[0].id);
+  }
+
+  // poner nuevo como serving + escritorio
+  await supabase
+    .from("queue")
+    .update({ status: "serving", desk: "1" }) // 👈 IMPORTANTE
+    .eq("id", next.id);
+
+  fetchQueue(); // 👈 refresca
+};
 
     // nuevo a serving
     await supabase
