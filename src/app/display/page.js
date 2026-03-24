@@ -27,23 +27,25 @@ export default function Display() {
     return () => supabase.removeChannel(channel);
   }, []);
 
-  const fetchCurrent = async () => {
-    const { data } = await supabase
-      .from("queue")
-      .select("*")
-      .eq("status", "serving")
-      .limit(1)
-      .limit(1);
+const fetchCurrent = async () => {
+  const { data } = await supabase
+    .from("queue")
+    .select("*")
+    .eq("status", "serving")
+    .limit(1);
 
-    if (data) {
-      setCurrent(data);
+  if (data && data.length > 0) {
+    const currentClient = data[0];
+    setCurrent(currentClient);
 
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play();
-      }
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
     }
-  };
+  } else {
+    setCurrent(null);
+  }
+};
 
   return (
     <div className="h-screen bg-blue-900 text-white flex flex-col items-center justify-center">
