@@ -13,19 +13,28 @@ export default function Display() {
   const audioRef = useRef(null);
 
   useEffect(() => {
-    fetchCurrent();
+  fetchCurrent();
 
-    const channel = supabase
-      .channel("realtime_display")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "queue" },
-        fetchCurrent
-      )
-      .subscribe();
+  const channel = supabase
+    .channel("realtime_display")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "queue",
+      },
+      (payload) => {
+        console.log("Cambio detectado:", payload);
+        fetchCurrent();
+      }
+    )
+    .subscribe();
 
-    return () => supabase.removeChannel(channel);
-  }, []);
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
 
 const fetchCurrent = async () => {
   const { data } = await supabase
