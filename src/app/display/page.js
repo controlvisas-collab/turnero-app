@@ -33,7 +33,7 @@ export default function Display() {
       .select("*")
       .eq("status", "serving")
       .limit(1)
-      .single();
+      .limit(1);
 
     if (data) {
       setCurrent(data);
