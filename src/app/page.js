@@ -45,12 +45,13 @@ export default function Page() {
   const name = prompt("Nombre del cliente");
   if (!name) return;
 
-  await supabase.from("queue").insert([
-    { name, status: "waiting" }
-  ]);
-
-  fetchQueue(); // 🔥 IMPORTANTE
-};
+  await supabase
+  .from("queue")
+  .update({ 
+    status: "serving",
+    desk: desk // 👈 USA EL SELECTOR REAL
+  })
+  .eq("id", next.id);
 
   const callNext = async () => {
   if (!waiting.length) return;
