@@ -37,18 +37,22 @@ export default function Display() {
 }, []);
 
 const fetchCurrent = async () => {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("queue")
     .select("*")
     .eq("status", "serving")
     .order("created_at", { ascending: true })
     .limit(1);
 
+  console.log("CURRENT:", data, error);
+
   if (data && data.length > 0) {
     const currentClient = data[0];
+
     setCurrent(currentClient);
 
-    if (audioRef.current) {
+    // 🔊 sonido SOLO si cambia cliente
+    if (audioRef.current && current?.id !== currentClient.id) {
       audioRef.current.currentTime = 0;
       audioRef.current.play();
     }
