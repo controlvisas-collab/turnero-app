@@ -9,8 +9,9 @@ const supabase = createClient(
 );
 
 export default function Page() {
-  const [queue, setQueue] = useState([]);
-  const [current, setCurrent] = useState(null);
+  const [waiting, setWaiting] = useState([]);
+  const [serving, setServing] = useState([]);
+  const [completed, setCompleted] = useState([]);
 
   useEffect(() => {
     fetchQueue();
@@ -33,20 +34,40 @@ export default function Page() {
       .select("*")
       .order("created_at");
 
-    setQueue(data || []);
+    if (!data) return;
+
+    setWaiting(data.filter(c => c.status === "waiting"));
+    setServing(data.filter(c => c.status === "serving"));
+    setCompleted(data.filter(c => c.status === "done"));
+  };
+
+  const addClient = async () => {
+    const name = prompt("Nombre del cliente");
+    if (!name) return;
+
+    await supabase.from("queue").insert([
+      { name, status: "waiting" }
+    ]);
   };
 
   const callNext = async () => {
-    if (!queue.length) return;
+    if (!waiting.length) return;
 
-    const next = queue[0];
-    setCurrent(next);
+    const next = waiting[0];
 
-    await supabase.from("history").insert([
-      { name: next.name, desk: 1 }
-    ]);
+    // pasar actual a done
+    if (serving.length) {
+      await supabase
+        .from("queue")
+        .update({ status: "done" })
+        .eq("id", serving[0].id);
+    }
 
-    await supabase.from("queue").delete().eq("id", next.id);
+    // nuevo a serving
+    await supabase
+      .from("queue")
+      .update({ status: "serving" })
+      .eq("id", next.id);
   };
 
   return (
@@ -66,12 +87,22 @@ export default function Page() {
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-xl font-bold">Desk 1</h1>
-          <button
-            onClick={callNext}
-            className="bg-green-600 text-white px-6 py-2 rounded-lg"
-          >
-            Call next
-          </button>
+
+          <div className="flex gap-3">
+            <button
+              onClick={addClient}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+            >
+              + Add visitor
+            </button>
+
+            <button
+              onClick={callNext}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg"
+            >
+              Call next
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-6">
@@ -80,11 +111,11 @@ export default function Page() {
           <div className="bg-white p-4 rounded-xl shadow">
             <h2 className="font-bold mb-3">Serving now</h2>
 
-            {current ? (
-              <div className="p-3 bg-green-100 rounded">
-                {current.name}
+            {serving.length ? serving.map(c => (
+              <div key={c.id} className="p-3 bg-green-200 rounded mb-2">
+                {c.name}
               </div>
-            ) : (
+            )) : (
               <div className="text-gray-400">No one</div>
             )}
           </div>
@@ -92,14 +123,11 @@ export default function Page() {
           {/* WAITING */}
           <div className="bg-white p-4 rounded-xl shadow">
             <h2 className="font-bold mb-3">
-              Waiting ({queue.length})
+              Waiting ({waiting.length})
             </h2>
 
-            {queue.map((c, i) => (
-              <div
-                key={c.id}
-                className="p-3 border rounded mb-2 bg-gray-50"
-              >
+            {waiting.map((c, i) => (
+              <div key={c.id} className="p-3 border rounded mb-2">
                 {i + 1}. {c.name}
               </div>
             ))}
@@ -108,9 +136,12 @@ export default function Page() {
           {/* COMPLETED */}
           <div className="bg-white p-4 rounded-xl shadow">
             <h2 className="font-bold mb-3">Completed</h2>
-            <div className="text-gray-400">
-              (puedes conectar history aquí)
-            </div>
+
+            {completed.map(c => (
+              <div key={c.id} className="p-3 bg-gray-200 rounded mb-2">
+                {c.name}
+              </div>
+            ))}
           </div>
 
         </div>
