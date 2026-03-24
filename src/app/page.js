@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -9,11 +9,8 @@ const supabase = createClient(
 );
 
 export default function Page() {
-  const [name, setName] = useState("");
-  const [desk, setDesk] = useState("1");
   const [queue, setQueue] = useState([]);
   const [current, setCurrent] = useState(null);
-  const audioRef = useRef(null);
 
   useEffect(() => {
     fetchQueue();
@@ -39,47 +36,85 @@ export default function Page() {
     setQueue(data || []);
   };
 
-  const addClient = async () => {
-    if (!name) return;
-    await supabase.from("queue").insert([{ name }]);
-    setName("");
-  };
-
   const callNext = async () => {
     if (!queue.length) return;
 
     const next = queue[0];
-    setCurrent({ ...next, desk });
-
-    audioRef.current?.play().catch(() => {});
+    setCurrent(next);
 
     await supabase.from("history").insert([
-      { name: next.name, desk }
+      { name: next.name, desk: 1 }
     ]);
 
     await supabase.from("queue").delete().eq("id", next.id);
   };
 
   return (
-    <div className="p-6">
-      <audio ref={audioRef} src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" />
+    <div className="flex h-screen bg-gray-100">
 
-      <input value={name} onChange={e => setName(e.target.value)} placeholder="Nombre" />
-      <button onClick={addClient}>Agregar</button>
+      {/* SIDEBAR */}
+      <div className="w-20 bg-green-900 text-white flex flex-col items-center py-4 space-y-6">
+        <div className="text-xl font-bold">Q</div>
+        <div>🏠</div>
+        <div>📋</div>
+        <div>⚙️</div>
+      </div>
 
-      <select value={desk} onChange={e => setDesk(e.target.value)}>
-        {[1,2,3,4,5,6,7].map(d => (
-          <option key={d} value={d}>Escritorio {d}</option>
-        ))}
-      </select>
+      {/* MAIN */}
+      <div className="flex-1 p-6">
 
-      <button onClick={callNext}>Llamar</button>
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-xl font-bold">Desk 1</h1>
+          <button
+            onClick={callNext}
+            className="bg-green-600 text-white px-6 py-2 rounded-lg"
+          >
+            Call next
+          </button>
+        </div>
 
-      {queue.map((c,i) => (
-        <div key={c.id}>{i+1}. {c.name}</div>
-      ))}
+        <div className="grid grid-cols-3 gap-6">
 
-      <h1>{current?.name}</h1>
+          {/* SERVING */}
+          <div className="bg-white p-4 rounded-xl shadow">
+            <h2 className="font-bold mb-3">Serving now</h2>
+
+            {current ? (
+              <div className="p-3 bg-green-100 rounded">
+                {current.name}
+              </div>
+            ) : (
+              <div className="text-gray-400">No one</div>
+            )}
+          </div>
+
+          {/* WAITING */}
+          <div className="bg-white p-4 rounded-xl shadow">
+            <h2 className="font-bold mb-3">
+              Waiting ({queue.length})
+            </h2>
+
+            {queue.map((c, i) => (
+              <div
+                key={c.id}
+                className="p-3 border rounded mb-2 bg-gray-50"
+              >
+                {i + 1}. {c.name}
+              </div>
+            ))}
+          </div>
+
+          {/* COMPLETED */}
+          <div className="bg-white p-4 rounded-xl shadow">
+            <h2 className="font-bold mb-3">Completed</h2>
+            <div className="text-gray-400">
+              (puedes conectar history aquí)
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }
