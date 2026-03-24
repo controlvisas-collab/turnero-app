@@ -139,7 +139,16 @@ export default function Page() {
               </div>
             ))}
           </div>
+const finishCurrent = async () => {
+  if (!serving.length) return;
 
+  await supabase
+    .from("queue")
+    .update({ status: "done" })
+    .eq("id", serving[0].id);
+
+  fetchQueue();
+};
           {/* COMPLETED */}
           <div className="bg-white p-4 rounded-xl shadow">
             <h2 className="font-bold mb-3">Completed</h2>
