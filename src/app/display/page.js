@@ -30,7 +30,7 @@ export default function Display() {
       }
     )
     .subscribe();
-
+console.log("DISPLAY CARGADO");
   return () => {
     supabase.removeChannel(channel);
   };
