@@ -32,6 +32,7 @@ const fetchCurrent = async () => {
     .from("queue")
     .select("*")
     .eq("status", "serving")
+    .order("created_at", { ascending: true })
     .limit(1);
 
   if (data && data.length > 0) {
