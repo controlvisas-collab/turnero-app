@@ -32,18 +32,10 @@ const fetchCurrent = async () => {
     .order("created_at", { ascending: true })
     .limit(1);
 
-  console.log("CURRENT:", data, error);
+  console.log("FETCH:", data, error);
 
   if (data && data.length > 0) {
-    const currentClient = data[0];
-
-    setCurrent(currentClient);
-
-    // 🔊 sonido SOLO si cambia cliente
-    if (audioRef.current && current?.id !== currentClient.id) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play();
-    }
+    setCurrent(data[0]);
   } else {
     setCurrent(null);
   }
