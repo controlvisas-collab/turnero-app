@@ -97,7 +97,12 @@ export default function Page() {
             >
               + Add visitor
             </button>
-
+<button
+  onClick={finishCurrent}
+  className="bg-gray-800 text-white px-6 py-2 rounded-lg"
+>
+  Finish
+</button>
             <button
               onClick={callNext}
               className="bg-green-600 text-white px-6 py-2 rounded-lg"
