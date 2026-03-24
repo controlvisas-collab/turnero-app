@@ -42,13 +42,15 @@ export default function Page() {
   };
 
   const addClient = async () => {
-    const name = prompt("Nombre del cliente");
-    if (!name) return;
+  const name = prompt("Nombre del cliente");
+  if (!name) return;
 
-    await supabase.from("queue").insert([
-      { name, status: "waiting" }
-    ]);
-  };
+  await supabase.from("queue").insert([
+    { name, status: "waiting" }
+  ]);
+
+  fetchQueue(); // 🔥 IMPORTANTE
+};
 
   const callNext = async () => {
     if (!waiting.length) return;
