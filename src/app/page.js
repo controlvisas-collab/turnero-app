@@ -12,6 +12,7 @@ export default function Page() {
   const [waiting, setWaiting] = useState([]);
   const [serving, setServing] = useState([]);
   const [completed, setCompleted] = useState([]);
+  const [desk, setDesk] = useState("1");
 
   useEffect(() => {
     fetchQueue();
@@ -41,45 +42,51 @@ export default function Page() {
     setCompleted(data.filter(c => c.status === "done"));
   };
 
+  // ✅ AGREGAR CLIENTE (CORREGIDO)
   const addClient = async () => {
-  const name = prompt("Nombre del cliente");
-  if (!name) return;
+    const name = prompt("Nombre del cliente");
+    if (!name) return;
 
-  await supabase
-  .from("queue")
-  .update({ 
-    status: "serving",
-    desk: desk // 👈 USA EL SELECTOR REAL
-  })
-  .eq("id", next.id);
+    await supabase.from("queue").insert([
+      { name, status: "waiting" }
+    ]);
 
+    fetchQueue();
+  };
+
+  // ✅ LLAMAR SIGUIENTE (CORREGIDO)
   const callNext = async () => {
-  if (!waiting.length) return;
+    if (!waiting.length) return;
 
-  const next = waiting[0];
+    const next = waiting[0];
 
-  // pasar actual a done
-  if (serving.length) {
-    await supabase
-      .from("queue")
-      .update({ status: "done" })
-      .eq("id", serving[0].id);
-  }
-
-  // poner nuevo como serving + escritorio
-  await supabase
-    .from("queue")
-    .update({ status: "serving", desk: "1" }) // 👈 IMPORTANTE
-    .eq("id", next.id);
-
-  fetchQueue(); // 👈 refresca
-};
+    // pasar actual a done
+    if (serving.length) {
+      await supabase
+        .from("queue")
+        .update({ status: "done" })
+        .eq("id", serving[0].id);
+    }
 
     // nuevo a serving
     await supabase
       .from("queue")
-      .update({ status: "serving" })
+      .update({ status: "serving", desk })
       .eq("id", next.id);
+
+    fetchQueue();
+  };
+
+  // ✅ FINALIZAR ATENCIÓN (CORRECTO Y BIEN UBICADO)
+  const finishCurrent = async () => {
+    if (!serving.length) return;
+
+    await supabase
+      .from("queue")
+      .update({ status: "done" })
+      .eq("id", serving[0].id);
+
+    fetchQueue();
   };
 
   return (
@@ -98,7 +105,7 @@ export default function Page() {
 
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-xl font-bold">Desk 1</h1>
+          <h1 className="text-xl font-bold">Desk {desk}</h1>
 
           <div className="flex gap-3">
             <button
@@ -107,12 +114,14 @@ export default function Page() {
             >
               + Add visitor
             </button>
-<button
-  onClick={finishCurrent}
-  className="bg-gray-800 text-white px-6 py-2 rounded-lg"
->
-  Finish
-</button>
+
+            <button
+              onClick={finishCurrent}
+              className="bg-gray-800 text-white px-6 py-2 rounded-lg"
+            >
+              Finish
+            </button>
+
             <button
               onClick={callNext}
               className="bg-green-600 text-white px-6 py-2 rounded-lg"
@@ -122,6 +131,19 @@ export default function Page() {
           </div>
         </div>
 
+        {/* SELECT DESK */}
+        <select
+          value={desk}
+          onChange={(e) => setDesk(e.target.value)}
+          className="mb-4 border p-2 rounded"
+        >
+          {[1,2,3,4,5,6,7].map(d => (
+            <option key={d} value={d}>
+              Escritorio {d}
+            </option>
+          ))}
+        </select>
+
         <div className="grid grid-cols-3 gap-6">
 
           {/* SERVING */}
@@ -130,7 +152,7 @@ export default function Page() {
 
             {serving.length ? serving.map(c => (
               <div key={c.id} className="p-3 bg-green-200 rounded mb-2">
-                {c.name}
+                {c.name} (Desk {c.desk})
               </div>
             )) : (
               <div className="text-gray-400">No one</div>
@@ -149,16 +171,7 @@ export default function Page() {
               </div>
             ))}
           </div>
-const finishCurrent = async () => {
-  if (!serving.length) return;
 
-  await supabase
-    .from("queue")
-    .update({ status: "done" })
-    .eq("id", serving[0].id);
-
-  fetchQueue();
-};
           {/* COMPLETED */}
           <div className="bg-white p-4 rounded-xl shadow">
             <h2 className="font-bold mb-3">Completed</h2>
